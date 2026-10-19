@@ -9,10 +9,16 @@ problems often share one description, and their labels would then contradict eac
 
 import html
 import json
+import random
 import re
 from pathlib import Path
 
-from avalanche_llm.config import LANGUAGES, PROCESSED_DIR, TEST_WINTER
+from avalanche_llm.config import (
+    LANGUAGES,
+    PROCESSED_DIR,
+    TEST_SAMPLE_PER_LANGUAGE,
+    TEST_WINTER,
+)
 from avalanche_llm.download import load
 from avalanche_llm.schema import Bulletin, Problem
 
@@ -90,6 +96,13 @@ def split(examples: list[dict]) -> tuple[list[dict], list[dict]]:
     return train, test
 
 
+def sample(test: list[dict], n: int, seed: int = 0) -> list[dict]:
+    """n bulletins that are in the test set of every language, in all languages."""
+    ids_per_lang = [{e["id"] for e in test if e["lang"] == lang} for lang in LANGUAGES]
+    ids = set(random.Random(seed).sample(sorted(set.intersection(*ids_per_lang)), n))
+    return [e for e in test if e["id"] in ids]
+
+
 def save(examples: list[dict], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -97,9 +110,13 @@ def save(examples: list[dict], path: Path) -> None:
             f.write(json.dumps(example, ensure_ascii=False) + "\n")
 
 
-def load_split(name: str) -> list[dict]:
-    with open(PROCESSED_DIR / f"{name}.jsonl", encoding="utf-8") as f:
+def read(path: Path) -> list[dict]:
+    with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f]
+
+
+def load_split(name: str) -> list[dict]:
+    return read(PROCESSED_DIR / f"{name}.jsonl")
 
 
 def main() -> None:
@@ -112,6 +129,7 @@ def main() -> None:
         print(f"{lang}: {len(lang_train)} train, {len(lang_test)} test examples")
     save(train, PROCESSED_DIR / "train.jsonl")
     save(test, PROCESSED_DIR / "test.jsonl")
+    save(sample(test, TEST_SAMPLE_PER_LANGUAGE), PROCESSED_DIR / "test_sample.jsonl")
 
 
 if __name__ == "__main__":

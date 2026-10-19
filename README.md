@@ -23,6 +23,18 @@ uv run python -m avalanche_llm.dataset    # train: winters 23/24 + 24/25, test: 
 uv run pytest
 ```
 
+Run the approaches on the same test sample (300 bulletins per language) and compare them:
+
+```
+uv run python -m avalanche_llm.baseline                          # rules, free
+uv run python -m avalanche_llm.frontier claude-haiku-5-5 --shots 0   # needs ANTHROPIC_API_KEY
+uv run python -m avalanche_llm.frontier claude-opus-5-5 --shots 5
+uv run python -m avalanche_llm.evaluate                          # results table
+```
+
+Predictions are committed in `data/predictions/`, so the results table can be
+reproduced without paying for the LLM calls again.
+
 ## Data
 
 Avalanche bulletins: [WSL Institute for Snow and Avalanche Research SLF](https://www.slf.ch),

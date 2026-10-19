@@ -1,5 +1,7 @@
 """Score predicted bulletins against the labels. Every approach is scored by this code.
 
+python -m avalanche_llm.evaluate     # scores every file in data/predictions/
+
 Predicted and true problems are matched by their type, since a bulletin lists each type
 at most once. The other fields are scored on the matched problems only, so they show how
 well a model describes a problem it has found.
@@ -7,6 +9,8 @@ well a model describes a problem it has found.
 
 from pydantic import ValidationError
 
+from avalanche_llm.config import LANGUAGES, PREDICTIONS_DIR
+from avalanche_llm.dataset import load_split, read
 from avalanche_llm.schema import Bulletin, Problem
 
 FIELDS = ["danger_level", "danger_modifier", "aspects", "elevation_lower", "elevation_upper"]
@@ -57,3 +61,34 @@ def field_matches(true: Problem, predicted: Problem) -> dict[str, bool]:
         "elevation_lower": predicted.elevation_lower == true.elevation_lower,
         "elevation_upper": predicted.elevation_upper == true.elevation_upper,
     }
+
+
+def results(test: list[dict], predictions: list[dict]) -> dict[str, float]:
+    """Scores on the whole test sample, the headline score per language and the cost."""
+    by_key = {(p["id"], p["lang"]): p for p in predictions}
+    found = [by_key[e["id"], e["lang"]] for e in test]
+    labels = [Bulletin.model_validate(e["label"]) for e in test]
+    parsed = [parse(p["output"]) if p["output"] else None for p in found]
+    per_language = {
+        f"exact_problem_f1_{lang}": score(
+            [label for label, e in zip(labels, test, strict=True) if e["lang"] == lang],
+            [pred for pred, e in zip(parsed, test, strict=True) if e["lang"] == lang],
+        )["exact_problem_f1"]
+        for lang in LANGUAGES
+    }
+    cost = 1000 * sum(p["cost_usd"] for p in found) / len(found)
+    return score(labels, parsed) | per_language | {"usd_per_1000_bulletins": cost}
+
+
+def main() -> None:
+    test = load_split("test_sample")
+    table = {path.stem: results(test, read(path)) for path in PREDICTIONS_DIR.glob("*.jsonl")}
+    metrics = list(next(iter(table.values())))
+    print("| metric | " + " | ".join(table) + " |")
+    print("|---" * (len(table) + 1) + "|")
+    for metric in metrics:
+        print(f"| {metric} | " + " | ".join(f"{r[metric]:.3f}" for r in table.values()) + " |")
+
+
+if __name__ == "__main__":
+    main()
