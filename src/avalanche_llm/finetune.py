@@ -107,7 +107,11 @@ def predict(model, tokenizer, examples: list[dict]) -> list[dict]:
             [prompt(tokenizer, e["text"]) for e in batch], return_tensors="pt", padding=True
         ).to("cuda")
         with torch.no_grad():
-            output = model.generate(**inputs, max_new_tokens=MAX_NEW_TOKENS, do_sample=False)
+            # Training switches the cache off (it clashes with gradient checkpointing). Turn it
+            # back on: without it, every new token recomputes the whole text.
+            output = model.generate(
+                **inputs, max_new_tokens=MAX_NEW_TOKENS, do_sample=False, use_cache=True
+            )
         answers = tokenizer.batch_decode(
             output[:, inputs["input_ids"].shape[1] :], skip_special_tokens=True
         )
