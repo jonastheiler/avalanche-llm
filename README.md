@@ -39,6 +39,7 @@ Fine-tune Qwen3-1.7B with LoRA on a GPU, e.g. a free Kaggle notebook with a T4
 
 ```
 pip install -e ".[finetune]"
+pip uninstall -y torchao       # Kaggle only: its old torchao makes peft refuse to load
 python -m avalanche_llm.dataset
 python -m avalanche_llm.finetune 16 --smoke        # a few minutes: checks the setup
 python -m avalanche_llm.finetune 0 100 300 1000    # 0 = without fine-tuning
