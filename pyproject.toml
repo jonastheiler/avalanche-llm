@@ -10,6 +10,10 @@ dependencies = [
     "requests>=2.32",
 ]
 
+[project.optional-dependencies]
+# Only on the GPU machine that fine-tunes the small model.
+finetune = ["torch>=2.4", "transformers>=4.56", "peft>=0.15"]
+
 [dependency-groups]
 dev = ["pytest>=8.2", "ruff>=0.6"]
 

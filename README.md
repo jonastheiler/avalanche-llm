@@ -34,6 +34,16 @@ uv run python -m avalanche_llm.frontier claude-opus-5-5 --shots 5 --split test_s
 uv run python -m avalanche_llm.evaluate                       # results on the test sample
 ```
 
+Fine-tune Qwen3-1.7B with LoRA on a GPU, e.g. a free Kaggle notebook with a T4
+(the newest PyTorch versions no longer support Kaggle's P100):
+
+```
+pip install -e ".[finetune]"
+python -m avalanche_llm.dataset
+python -m avalanche_llm.finetune 16 --smoke        # a few minutes: checks the setup
+python -m avalanche_llm.finetune 0 100 300 1000    # 0 = without fine-tuning
+```
+
 The headline score is **type + level F1**: a predicted avalanche problem counts if both its
 type and its danger level are right.
 

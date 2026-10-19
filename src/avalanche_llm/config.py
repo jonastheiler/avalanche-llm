@@ -21,6 +21,8 @@ SPLITS = ["validation", "test_sample"]
 # US$ per million input and output tokens. The Batch API halves them.
 PRICES = {"claude-opus-5-5": (4.00, 20.00), "claude-haiku-5-5": (0.10, 0.50)}
 BATCH_DISCOUNT = 0.5
+# The fine-tuned model runs on a rented GPU: an assumed on-demand price for one T4 (US$/h).
+GPU_USD_PER_HOUR = 0.40
 
 # SLF publishes every bulletin in these four languages, with the same bulletin IDs.
 LANGUAGES = ["de", "fr", "it", "en"]
