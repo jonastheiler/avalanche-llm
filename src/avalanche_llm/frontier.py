@@ -39,7 +39,7 @@ NAIVE = f"""{TASK}
 Some fields are not stated in the text: give your best estimate from the description."""
 
 # SLF's labelling conventions, measured on the training data.
-CONVENTIONS = f"""{TASK}
+FIELD_CONVENTIONS = f"""{TASK}
 - aspects: the slope aspects where the problem occurs
 - elevation_lower / elevation_upper: the problem occurs above / below this elevation in
   metres, null if not bounded
@@ -52,11 +52,22 @@ Many fields are not stated in the text. Follow SLF's conventions:
   "Shady slopes" means N, NE, E, W, NW.
 - wet_snow and gliding_snow never have an elevation_lower, usually no aspects, and almost
   never a danger_modifier. They sometimes have an elevation_upper.
-- Wind slabs that form during a snowfall are part of the new_snow problem: list new_snow
-  only, unless the text describes wind slabs as a separate problem.
 - danger_modifier is used for about two thirds of the dry problems."""
 
-PROMPTS = {"naive": NAIVE, "conventions": CONVENTIONS}
+# The second prompt. It improved aspects and elevations on the validation set, but this
+# rule also made the model drop wind slabs SLF lists separately, and danger got worse.
+CONVENTIONS = f"""{FIELD_CONVENTIONS}
+- Wind slabs that form during a snowfall are part of the new_snow problem: list new_snow
+  only, unless the text describes wind slabs as a separate problem."""
+
+# The third and final prompt: without that rule, and with the danger levels per problem
+# type, since the model rated many problems one level too high.
+CALIBRATED = f"""{FIELD_CONVENTIONS}
+- Do not overestimate the danger. Typical danger levels per problem type:
+  new_snow mostly 3, persistent_weak_layers 2 or 3, wind_slab mostly 2, wet_snow mostly 2,
+  gliding_snow 1 or 2, no_distinct_avalanche_problem mostly 1."""
+
+PROMPTS = {"naive": NAIVE, "conventions": CONVENTIONS, "calibrated": CALIBRATED}
 
 SCHEMA = anthropic.transform_schema(Bulletin)
 # Extraction needs little reasoning. Low effort keeps thinking, and the bill, short.
@@ -140,7 +151,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("model", choices=list(PRICES))
     parser.add_argument("--shots", type=int, default=0)
-    parser.add_argument("--prompt", choices=list(PROMPTS), default="conventions")
+    parser.add_argument("--prompt", choices=list(PROMPTS), default="calibrated")
     parser.add_argument("--split", choices=SPLITS, default="validation")
     parser.add_argument("--batch-id", help="collect an earlier batch instead of starting one")
     args = parser.parse_args()
