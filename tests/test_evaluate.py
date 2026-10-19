@@ -27,9 +27,20 @@ def test_fields_are_scored_on_matched_problems_only():
     result = score(labels, predictions)
 
     assert result["problem_type_f1"] == pytest.approx(2 / 3)
+    assert result["type_level_f1"] == 0.0
     assert result["exact_problem_f1"] == 0.0
     assert result["danger_level"] == 0.0
     assert result["aspects"] == 1.0
+
+
+def test_type_level_f1_ignores_the_other_fields():
+    labels = [Bulletin(problems=[WIND_SLAB])]
+    predictions = [Bulletin(problems=[WIND_SLAB.model_copy(update={"aspects": []})])]
+
+    result = score(labels, predictions)
+
+    assert result["type_level_f1"] == 1.0
+    assert result["exact_problem_f1"] == 0.0
 
 
 def test_invalid_prediction_misses_every_problem():

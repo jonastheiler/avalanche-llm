@@ -18,6 +18,8 @@ from avalanche_llm.config import (
     PROCESSED_DIR,
     TEST_SAMPLE_PER_LANGUAGE,
     TEST_WINTER,
+    VALIDATION_PER_LANGUAGE,
+    VALIDATION_WINTER,
 )
 from avalanche_llm.download import load
 from avalanche_llm.schema import Bulletin, Problem
@@ -126,8 +128,13 @@ def main() -> None:
         lang_train, lang_test = split(deduplicate(examples))
         train += lang_train
         test += lang_test
-        print(f"{lang}: {len(lang_train)} train, {len(lang_test)} test examples")
+    last_winter = [e for e in train if e["winter"] == VALIDATION_WINTER]
+    validation = sample(last_winter, VALIDATION_PER_LANGUAGE)
+    held_out = {e["id"] for e in validation}
+    train = [e for e in train if e["id"] not in held_out]
+    print(f"{len(train)} train, {len(validation)} validation, {len(test)} test examples")
     save(train, PROCESSED_DIR / "train.jsonl")
+    save(validation, PROCESSED_DIR / "validation.jsonl")
     save(test, PROCESSED_DIR / "test.jsonl")
     save(sample(test, TEST_SAMPLE_PER_LANGUAGE), PROCESSED_DIR / "test_sample.jsonl")
 

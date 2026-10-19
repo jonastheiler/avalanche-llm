@@ -23,14 +23,19 @@ uv run python -m avalanche_llm.dataset    # train: winters 23/24 + 24/25, test: 
 uv run pytest
 ```
 
-Run the approaches on the same test sample (300 bulletins per language) and compare them:
+Prompts are developed on a validation sample (100 bulletins per language, held out from
+the 24/25 winter). Only the final runs use the test sample (300 bulletins per language):
 
 ```
-uv run python -m avalanche_llm.baseline                          # rules, free
-uv run python -m avalanche_llm.frontier claude-haiku-5-5 --shots 0   # needs ANTHROPIC_API_KEY
-uv run python -m avalanche_llm.frontier claude-opus-5-5 --shots 5
-uv run python -m avalanche_llm.evaluate                          # results table
+uv run python -m avalanche_llm.baseline                       # rules, free, both samples
+uv run python -m avalanche_llm.frontier claude-haiku-5-5      # needs ANTHROPIC_API_KEY
+uv run python -m avalanche_llm.evaluate --split validation    # compare prompts
+uv run python -m avalanche_llm.frontier claude-opus-5-5 --shots 5 --split test_sample
+uv run python -m avalanche_llm.evaluate                       # results on the test sample
 ```
+
+The headline score is **type + level F1**: a predicted avalanche problem counts if both its
+type and its danger level are right.
 
 Predictions are committed in `data/predictions/`, so the results table can be
 reproduced without paying for the LLM calls again.

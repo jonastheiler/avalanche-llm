@@ -1,6 +1,6 @@
 """A rule-based baseline: keywords find the problem types, the training data fills in the rest.
 
-python -m avalanche_llm.baseline
+python -m avalanche_llm.baseline     # on the validation and test sample
 
 Any LLM has to beat this to be worth its cost.
 """
@@ -9,7 +9,7 @@ import json
 import re
 from collections import Counter
 
-from avalanche_llm.config import PREDICTIONS_DIR
+from avalanche_llm.config import PREDICTIONS_DIR, SPLITS
 from avalanche_llm.dataset import load_split, save
 from avalanche_llm.schema import Bulletin, Problem
 
@@ -82,16 +82,17 @@ def predict(text: str, lang: str, typical: dict[str, Problem]) -> Bulletin:
 
 def main() -> None:
     typical = most_common_problems(load_split("train"))
-    predictions = [
-        {
-            "id": e["id"],
-            "lang": e["lang"],
-            "output": predict(e["text"], e["lang"], typical).model_dump_json(),
-            "cost_usd": 0.0,
-        }
-        for e in load_split("test_sample")
-    ]
-    save(predictions, PREDICTIONS_DIR / "rules.jsonl")
+    for split in SPLITS:
+        predictions = [
+            {
+                "id": e["id"],
+                "lang": e["lang"],
+                "output": predict(e["text"], e["lang"], typical).model_dump_json(),
+                "cost_usd": 0.0,
+            }
+            for e in load_split(split)
+        ]
+        save(predictions, PREDICTIONS_DIR / split / "rules.jsonl")
 
 
 if __name__ == "__main__":

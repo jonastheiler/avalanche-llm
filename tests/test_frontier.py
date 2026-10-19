@@ -41,8 +41,8 @@ def test_few_shot_examples_cover_new_types_in_the_right_language():
 
 
 def test_system_prompt_has_examples_only_when_asked():
-    assert "<example>" not in system_prompt([])
-    assert "<example>" in system_prompt([make_example("de", "wind_slab")])
+    assert "<example>" not in system_prompt("Task.", [])
+    assert "<example>" in system_prompt("Task.", [make_example("de", "wind_slab")])
 
 
 def test_cost_counts_cache_reads_at_a_tenth_and_halves_for_batches():
