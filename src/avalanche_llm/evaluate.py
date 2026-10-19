@@ -9,6 +9,7 @@ well a model describes a problem it has found.
 """
 
 import argparse
+import random
 
 from pydantic import ValidationError
 
@@ -84,8 +85,37 @@ def results(test: list[dict], predictions: list[dict]) -> dict[str, float]:
         )["type_level_f1"]
         for lang in LANGUAGES
     }
+    low, high = confidence_interval(labels, parsed, [e["id"] for e in test])
     cost = 1000 * sum(p["cost_usd"] for p in found) / len(found)
-    return score(labels, parsed) | per_language | {"usd_per_1000_bulletins": cost}
+    return (
+        score(labels, parsed)
+        | {"type_level_f1_ci_low": low, "type_level_f1_ci_high": high}
+        | per_language
+        | {"usd_per_1000_bulletins": cost}
+    )
+
+
+def confidence_interval(
+    labels: list[Bulletin],
+    predictions: list[Bulletin | None],
+    groups: list[str],
+    n_resamples: int = 500,
+    seed: int = 0,
+) -> tuple[float, float]:
+    """95% bootstrap interval of the headline score. A bulletin and its translations are
+    resampled together: they are not independent examples."""
+    rows: dict[str, list[int]] = {}
+    for i, group in enumerate(groups):
+        rows.setdefault(group, []).append(i)
+    rng = random.Random(seed)
+    scores = sorted(
+        score([labels[i] for i in sample], [predictions[i] for i in sample])["type_level_f1"]
+        for sample in (
+            [i for group in rng.choices(list(rows), k=len(rows)) for i in rows[group]]
+            for _ in range(n_resamples)
+        )
+    )
+    return scores[int(0.025 * n_resamples)], scores[int(0.975 * n_resamples)]
 
 
 def main() -> None:
