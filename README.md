@@ -19,6 +19,7 @@ Work in progress. The plan:
 ```
 uv sync
 uv run python -m avalanche_llm.download   # about 2 minutes
+uv run python -m avalanche_llm.dataset    # train: winters 23/24 + 24/25, test: 25/26
 uv run pytest
 ```
 
