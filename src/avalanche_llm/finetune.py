@@ -30,6 +30,7 @@ LORA = {
 }
 EPOCHS = 3
 BATCH_SIZE = 8
+MICRO_BATCH_SIZE = 2  # Bulletins per forward pass; BATCH_SIZE per optimizer step.
 LEARNING_RATE = 2e-4
 PREDICT_BATCH_SIZE = 16
 MAX_NEW_TOKENS = 512
@@ -77,20 +78,34 @@ def train(model, tokenizer, examples: list[dict]) -> None:
         random.Random(epoch).shuffle(encoded)
         losses = []
         for batch in batches(encoded, BATCH_SIZE):
-            length = max(len(ids) for ids, _ in batch)
-            pad = tokenizer.pad_token_id
-            input_ids = torch.tensor([ids + [pad] * (length - len(ids)) for ids, _ in batch])
-            labels = torch.tensor([lab + [-100] * (length - len(lab)) for _, lab in batch])
-            mask = torch.tensor([[1] * len(ids) + [0] * (length - len(ids)) for ids, _ in batch])
-            with torch.autocast("cuda", dtype=torch.float16):
-                loss = model(
-                    input_ids=input_ids.cuda(), attention_mask=mask.cuda(), labels=labels.cuda()
-                ).loss
-            scaler.scale(loss).backward()
+            # The logits hold a score for each of Qwen's 152k tokens at every position: for 8
+            # bulletins at once they don't fit next to the model. Add up the gradients of
+            # smaller pieces instead, weighted so the step is the same as for the whole batch.
+            batch_loss = 0.0
+            for micro in batches(batch, MICRO_BATCH_SIZE):
+                length = max(len(ids) for ids, _ in micro)
+                pad = tokenizer.pad_token_id
+                input_ids = torch.tensor([ids + [pad] * (length - len(ids)) for ids, _ in micro])
+                labels = torch.tensor([lab + [-100] * (length - len(lab)) for _, lab in micro])
+                mask = torch.tensor(
+                    [[1] * len(ids) + [0] * (length - len(ids)) for ids, _ in micro]
+                )
+                with torch.autocast("cuda", dtype=torch.float16):
+                    loss = (
+                        model(
+                            input_ids=input_ids.cuda(),
+                            attention_mask=mask.cuda(),
+                            labels=labels.cuda(),
+                        ).loss
+                        * len(micro)
+                        / len(batch)
+                    )
+                scaler.scale(loss).backward()
+                batch_loss += loss.item()
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()
-            losses.append(loss.item())
+            losses.append(batch_loss)
         print(f"epoch {epoch + 1}: loss {sum(losses) / len(losses):.3f}")
 
 
@@ -133,12 +148,14 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("n", type=int, nargs="+", help="numbers of training bulletins")
-    parser.add_argument("--smoke", action="store_true", help="16 bulletins, nothing saved")
+    parser.add_argument("--smoke", action="store_true", help="16 long bulletins, nothing saved")
     args = parser.parse_args()
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     train_split, test = load_split("train"), load_split("test_sample")
     if args.smoke:
-        train_split, test = train_split[:16], test[:16]
+        # The longest bulletins: if memory runs out, it runs out here, not after an hour.
+        train_split = sorted(train_split, key=lambda e: len(e["text"]))[-16:]
+        test = test[:16]
     for n in args.n:
         model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.float16).cuda()
         if n:
