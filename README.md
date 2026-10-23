@@ -14,6 +14,25 @@ Work in progress. The plan:
 4. **Measured:** per-field accuracy, valid JSON, cost per 1,000 bulletins, latency and
    results per language.
 
+## Results so far
+
+On the test sample (1,200 bulletins from winter 25/26, 300 per language), Qwen3-1.7B
+fine-tuned on 1,000 examples matches Claude Haiku:
+
+| | type + level F1 (95% CI) | danger level | valid JSON | USD per 1,000 bulletins |
+|---|---|---|---|---|
+| rules | 0.253 (0.224–0.284) | 0.339 | 1.000 | 0 |
+| Qwen3-1.7B, no fine-tuning | 0.000 | 0.000 | 0.000 | 0.23 |
+| Qwen3-1.7B + LoRA, 100 examples | 0.367 (0.334–0.401) | 0.597 | 1.000 | 0.12 |
+| Qwen3-1.7B + LoRA, 300 examples | 0.516 (0.483–0.549) | 0.743 | 0.998 | 0.14 |
+| Qwen3-1.7B + LoRA, 1,000 examples | 0.604 (0.573–0.638) | 0.785 | 1.000 | 0.12 |
+| Claude Haiku 5.5, zero-shot | 0.597 (0.569–0.629) | 0.750 | 1.000 | 0.17 |
+| Claude Haiku 5.5, 5-shot | 0.610 (0.580–0.640) | 0.750 | 1.000 | 0.13 |
+
+Without fine-tuning, Qwen answers in a list format rather than JSON. Qwen's cost is its
+inference time priced at US$0.40 per hour for a rented T4, not counting training.
+Results are about the same in all four languages.
+
 ## Getting started
 
 ```
