@@ -2,10 +2,12 @@
 
 python -m avalanche_llm.finetune 16 --smoke      # check the setup in a few minutes
 python -m avalanche_llm.finetune 0 100 300 1000
+python -m avalanche_llm.finetune 1000 --push user/qwen3-1.7b-avalanche-lora
 
 Needs a GPU, e.g. a Kaggle notebook, and pip install -e ".[finetune]". n = 0 scores the
 model without fine-tuning. The training loop is written out in plain PyTorch on purpose:
-it is short, and it shows what fine-tuning does.
+it is short, and it shows what fine-tuning does. --push needs a Hugging Face token
+(HF_TOKEN) with write access.
 """
 
 import argparse
@@ -34,6 +36,7 @@ MICRO_BATCH_SIZE = 2  # Bulletins per forward pass; BATCH_SIZE per optimizer ste
 LEARNING_RATE = 2e-4
 PREDICT_BATCH_SIZE = 16
 MAX_NEW_TOKENS = 512
+MODEL_CARD = "MODEL_CARD.md"
 
 
 def training_examples(train: list[dict], n: int, seed: int = 0) -> list[dict]:
@@ -141,6 +144,15 @@ def predict(model, tokenizer, examples: list[dict]) -> list[dict]:
     return predictions
 
 
+def push(model, repo_id: str) -> None:
+    """Upload only the LoRA weights (about 70 MB), not the 3.4 GB base model, and the card.
+    The repo starts private: check it on the Hub, then make it public there."""
+    from huggingface_hub import upload_file
+
+    model.push_to_hub(repo_id, private=True)
+    upload_file(path_or_fileobj=MODEL_CARD, path_in_repo="README.md", repo_id=repo_id)
+
+
 def main() -> None:
     import torch
     from peft import LoraConfig, get_peft_model
@@ -149,7 +161,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("n", type=int, nargs="+", help="numbers of training bulletins")
     parser.add_argument("--smoke", action="store_true", help="16 long bulletins, nothing saved")
+    parser.add_argument("--push", metavar="REPO_ID", help="upload the adapter to the HF Hub")
     args = parser.parse_args()
+    if args.push and (args.smoke or len(args.n) != 1 or args.n[0] == 0):
+        parser.error("--push needs exactly one n > 0 and no --smoke")
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     train_split, test = load_split("train"), load_split("test_sample")
     if args.smoke:
@@ -173,6 +188,8 @@ def main() -> None:
             print(predictions[0]["output"], f"{predictions[0]['seconds']:.2f} s per bulletin")
         else:
             save(predictions, PREDICTIONS_DIR / "test_sample" / f"{NAME}-{n}.jsonl")
+        if args.push:
+            push(model, args.push)
         del model
         torch.cuda.empty_cache()
 
