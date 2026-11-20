@@ -2,7 +2,7 @@
 
 python -m avalanche_llm.finetune 16 --smoke      # check the setup in a few minutes
 python -m avalanche_llm.finetune 0 100 300 1000
-python -m avalanche_llm.finetune 1000 --push user/qwen3-1.7b-avalanche-lora
+python -m avalanche_llm.finetune 1000 --push jth00/qwen3-1.7b-avalanche-lora
 
 Needs a GPU, e.g. a Kaggle notebook, and pip install -e ".[finetune]". n = 0 scores the
 model without fine-tuning. The training loop is written out in plain PyTorch on purpose:

@@ -55,7 +55,7 @@ from avalanche_llm.frontier import CALIBRATED
 
 tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-1.7B")
 base = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-1.7B", dtype=torch.float16, device_map="auto")
-model = PeftModel.from_pretrained(base, "jonastheiler/qwen3-1.7b-avalanche-lora")
+model = PeftModel.from_pretrained(base, "jth00/qwen3-1.7b-avalanche-lora")
 
 text = "As a consequence of bise wind, mostly small wind slabs formed on Thursday. ..."
 messages = [{"role": "system", "content": CALIBRATED}, {"role": "user", "content": text}]

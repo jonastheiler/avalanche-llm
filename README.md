@@ -174,7 +174,7 @@ pip uninstall -y torchao       # Kaggle only: its old torchao makes peft refuse 
 python -m avalanche_llm.dataset
 python -m avalanche_llm.finetune 16 --smoke        # a few minutes: checks the setup
 python -m avalanche_llm.finetune 0 100 300 1000    # 0 = without fine-tuning
-python -m avalanche_llm.finetune 1000 --push jonastheiler/qwen3-1.7b-avalanche-lora
+python -m avalanche_llm.finetune 1000 --push jth00/qwen3-1.7b-avalanche-lora
 ```
 
 `--push` uploads the adapter with `MODEL_CARD.md` as its card, to a private repo on the
