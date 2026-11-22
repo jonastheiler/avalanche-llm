@@ -33,7 +33,7 @@ match the forecasters' label.
 |---|---|---|---|---|
 | keyword rules | 0.253 (0.224–0.284) | 0.339 | 1.000 | 0 |
 | Qwen3-1.7B, no fine-tuning | 0.000 | 0.000 | 0.000 | 0.23 |
-| **this adapter (1,000 examples)** | **0.604 (0.573–0.638)** | **0.785** | **1.000** | **0.12** |
+| **this adapter (1,000 examples)** | **0.612 (0.581–0.646)** | **0.789** | **1.000** | **0.13** |
 | Claude Haiku 5.5, zero-shot | 0.597 (0.569–0.629) | 0.750 | 1.000 | 0.17 |
 | Claude Haiku 5.5, 5-shot | 0.610 (0.580–0.640) | 0.750 | 1.000 | 0.13 |
 
@@ -89,13 +89,14 @@ Problem types: `new_snow`, `wind_slab`, `persistent_weak_layers`, `wet_snow`,
 
 ## Limitations
 
-- **Not accurate enough to rely on.** Fewer than 1 in 10 predicted problems are right in every field.
+- **Not accurate enough to rely on.** Only about 1 in 10 predicted problems are right in every field.
 - **The text often doesn't contain the label.** Forecasters set aspects and elevations
   directly, and the text frequently doesn't state them, so the model's values for these
   are mostly educated guesses that match SLF's typical conventions.
 - **Only tested on SLF bulletins.** Other avalanche services, older archives or field
   reports may be worded differently.
-- **One training run with one seed.** The test intervals are about ±0.03.
+- **One training run without a fixed seed.** An earlier run with the same settings scored
+  0.604. The test intervals are about ±0.03.
 
 ## Data
 

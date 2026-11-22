@@ -25,7 +25,7 @@ fine-tuned on 1,000 examples matches Claude Haiku:
 | Qwen3-1.7B, no fine-tuning | 0.000 | 0.000 | 0.000 | 0.23 |
 | Qwen3-1.7B + LoRA, 100 examples | 0.367 (0.334–0.401) | 0.597 | 1.000 | 0.12 |
 | Qwen3-1.7B + LoRA, 300 examples | 0.516 (0.483–0.549) | 0.743 | 0.998 | 0.14 |
-| Qwen3-1.7B + LoRA, 1,000 examples | 0.604 (0.573–0.638) | 0.785 | 1.000 | 0.12 |
+| Qwen3-1.7B + LoRA, 1,000 examples | 0.612 (0.581–0.646) | 0.789 | 1.000 | 0.13 |
 | Claude Haiku 5.5, zero-shot | 0.597 (0.569–0.629) | 0.750 | 1.000 | 0.17 |
 | Claude Haiku 5.5, 5-shot | 0.610 (0.580–0.640) | 0.750 | 1.000 | 0.13 |
 
@@ -91,9 +91,9 @@ at all. Qwen guessed 2,200 m and Haiku 2,000 m.
 - **Fine-tuning is what makes the small model usable.** Without it, Qwen answers in a list
   format rather than JSON and scores zero. With 100 examples it follows the format but is
   well behind Haiku. With 300 it is close, and with 1,000 it is level.
-- **Qwen with 1,000 examples ties Haiku.** Its F1 of 0.604 lies between Haiku zero-shot
+- **Qwen with 1,000 examples ties Haiku.** Its F1 of 0.612 is level with Haiku zero-shot
   (0.597) and 5-shot (0.610), and the three intervals overlap almost completely. Qwen is
-  slightly better at the danger level (0.785 vs 0.750).
+  slightly better at the danger level (0.789 vs 0.750).
 - **The cost is about the same.** Both cost around US$0.12–0.17 per 1,000 bulletins, so
   the case for the small model is control (it runs anywhere and the data stays local),
   not price.
@@ -125,7 +125,7 @@ What holds up:
 What limits them:
 
 - **No approach is accurate enough to rely on.** Even the best get about 40% of the
-  avalanche problems wrong on type or level, and fewer than 1 in 10 are right in every
+  avalanche problems wrong on type or level, and only about 1 in 10 are right in every
   field.
 - **Part of the gap can't be closed from the text.** The forecasters set the structured
   fields directly, and the text often doesn't contain them. In the first test bulletin
@@ -136,8 +136,10 @@ What limits them:
   approach would matter for text without structured data, such as older archives,
   other avalanche services or field reports, but those weren't tested and may be
   worded differently.
-- **It is one run on one sample.** Qwen was fine-tuned once per size with one random
-  seed, and 300 bulletins (each in four languages) give intervals of about ±0.03. Qwen
+- **It is one run on one sample.** Qwen was fine-tuned once per size without a fixed
+  seed, and 300 bulletins (each in four languages) give intervals of about ±0.03.
+  Training the 1,000-example model a second time, for the published adapter, gave an F1
+  of 0.612 instead of 0.604: the table shows the second run. Qwen
   and Haiku are tied, but neither can be called better.
 - **The frontier comparison is incomplete.** Haiku is Claude's smallest model. Opus may
   well score higher, so "matches a frontier LLM" holds only for Haiku so far.
