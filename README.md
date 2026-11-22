@@ -3,6 +3,9 @@
 **How many labelled examples does a small open model need before it matches a frontier
 LLM at reading Swiss avalanche bulletins, and what does each option cost?**
 
+The fine-tuned model is on Hugging Face:
+[jth00/qwen3-1.7b-avalanche-lora](https://huggingface.co/jth00/qwen3-1.7b-avalanche-lora).
+
 Work in progress. The plan:
 
 1. **Data:** every bulletin since November 2023 from the SLF API, in German, French,
