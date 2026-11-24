@@ -5,6 +5,8 @@ LLM at reading Swiss avalanche bulletins, and what does each option cost?**
 
 The fine-tuned model is on Hugging Face:
 [jth00/qwen3-1.7b-avalanche-lora](https://huggingface.co/jth00/qwen3-1.7b-avalanche-lora).
+It is served as a REST API with Swagger UI in
+[avalanche-api](https://github.com/jonastheiler/avalanche-api).
 
 Work in progress. The plan:
 
